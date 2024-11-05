@@ -1,0 +1,49 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String       @id @default(cuid())
+  email        String       @unique
+  password     String
+  verifyCode   String?
+  verifyExpiry DateTime?
+  isVerified   Boolean?     @default(false)
+  chatbots     Chatwidget[] 
+}
+
+model Chatwidget {
+  id             String    @id @default(cuid())
+  name           String
+  isActive       Boolean   @default(false)
+  userId         String
+  user           User      @relation( fields: [userId], references: [id], onDelete: Cascade)
+  createdAt      DateTime  @default(now())
+  visitors       Visitor[] 
+  messages       Message[]
+  trustedOrigins String[]  @default(["http://localhost:3000", "http://localhost:5173"])
+}
+
+model Visitor {
+  id        String     @id @default(cuid())
+  chatwidgetId String
+  chatwidget   Chatwidget @relation( fields: [chatwidgetId], references: [id], onDelete: Cascade)
+  visitTime DateTime   @default(now())
+  messages  Message[]  
+}
+
+model Message {
+  id              Int        @id @default(autoincrement())
+  visitorId       String
+  visitor         Visitor    @relation( fields: [visitorId], references: [id], onDelete: Cascade)
+  chatwidgetId       String
+  chatwidget         Chatwidget @relation( fields: [chatwidgetId], references: [id], onDelete: Cascade)
+  isSentByVisitor Boolean
+  createdAt       DateTime   @default(now())
+  content         String
+}
